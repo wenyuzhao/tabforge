@@ -1,0 +1,17 @@
+[tool.poetry]
+name = "tabforge"
+version = "0.1.0"
+description = ""
+authors = ["Wenyu Zhao <wenyuzhaox@gmail.com>"]
+readme = "README.md"
+packages = [{ include = "tabforge" }]
+
+[tool.poetry.scripts]
+tabforge = "tabforge.main:main"
+
+[tool.poetry.dependencies]
+python = "^3.10"
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
