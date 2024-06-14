@@ -1,0 +1,59 @@
+<? python ?>
+import pandas as pd
+
+DF = pd.read_csv('example/tables/example.csv')
+
+DATA_ROWS = [row[1]for row in list(DF.iterrows())[:22]]
+MEAN = list(DF.iterrows())[25][1]
+GMEAN = list(DF.iterrows())[26][1]
+
+CI_LO = '.95.0%-CI.lowerBound'
+CI_HI = '.95.0%-CI.upperBound'
+<? endpython ?>
+
+<? macro val(row, key, mark=True) ?>
+    <? if mark and row[key] == DF[key].max() ?>
+        <?= row[key] | fmt | red ?>
+    <? elif mark and row[key] == DF[key].min() ?>
+        <?= row[key] | fmt | green ?>
+    <? else ?>
+        <?= row[key] | fmt ?>
+    <? endif ?>
+<? endmacro ?>
+
+<? macro ci(row, key) ?>
+    \begin{tabular}{@{}r@{}}
+        <?= ('--' + (row[key + CI_LO] | fmt)) | tiny ?>\\
+        <?= ('+' + (row[key + CI_HI] | fmt)) | tiny ?>
+    \end{tabular}
+<? endmacro ?>
+
+<? macro valci(row, key) ?>
+    \bgroup
+    \setlength\tabcolsep{1pt}
+    \def\arraystretch{0.50}
+    \begin{tabular}{@{}r r@{}}
+        <?= val(row, key) | center.v ?> & <?= ci(row, key) | gray ?>
+    \end{tabular}
+    \egroup
+<? endmacro ?>
+
+
+\bgroup
+\def\arraystretch{1.5}
+\begin{tabular}{l c@{\hspace{1ex}} c c c}
+    \toprule
+                                                         & & <?= 'G1' | bold | center.h ?>   & <?= 'LXR' | bold | center.h ?> & <?= 'G1' | bold | center.h ?> \\
+    \cmidrule(){1-1}\cmidrule(){3-5}
+    % data rows
+    <? for r in DATA_ROWS: ?>
+        <?= r['Unnamed: 2'] | emph ?>                    & & <?= val(r, 'G1', mark=False) ?> & <?= valci(r, 'LXR')  ?>        & <?= valci(r, 'Shen') ?>       \\
+    <? endfor ?>
+    \cmidrule(){1-1}\cmidrule(){3-5}
+    % mean
+    <?= MEAN['Unnamed: 2'] | emph | bold | cancel ?>     & & <?= MEAN['G1'] | fmt ?>         & <?= MEAN['LXR'] | fmt ?>       & <?= MEAN['Shen'] | fmt ?>     \\
+    % geomean
+    <?= GMEAN['Unnamed: 2'] | emph | bold | underline ?> & & <?= GMEAN['G1'] | fmt ?>        & <?= GMEAN['LXR'] | fmt ?>      & <?= GMEAN['Shen'] | fmt ?>    \\
+    \bottomrule
+\end{tabular}
+\egroup

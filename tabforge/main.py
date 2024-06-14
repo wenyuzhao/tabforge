@@ -1,2 +1,51 @@
+from pathlib import Path
+import typer
+from typing_extensions import Annotated
+import rich
+
+from . import render
+from .error import Error
+
+
+app = typer.Typer(add_completion=False)
+
+
+@app.command()
+def render_files(
+    inputs: Annotated[
+        list[Path],
+        typer.Argument(
+            ...,
+            help="Input files or directories to render. File names must end with '.t.tex'.",
+        ),
+    ],
+    quiet: Annotated[
+        bool, typer.Option("--quiet", "-q", help="Enable quiet mode.")
+    ] = False,
+):
+    input_files = []
+    # verify inputs
+    for input in inputs:
+        if not input.exists():
+            raise Error(f"File not found: {input}")
+        if input.is_file():
+            if not input.suffix == ".tex":
+                raise Error(f"Not a TeX file: {input}")
+            if not input.name.endswith(".t.tex"):
+                raise Error(f'Input file "{input}" does not end with ".t.tex".')
+            input_files.append(input)
+        elif input.is_dir():
+            for file in input.glob("**/*.t.tex"):
+                input_files.append(file)
+    # render files
+    for input in input_files:
+        output = Path(str(input).replace(".t.tex", ".g.tex"))
+        render.render_file(input=input, output=output)
+        if not quiet:
+            rich.print(
+                f"[bold green]RENDER[/bold green]", input, "[blue]➔[/blue]", output
+            )
+
+
 def main():
-    print("Hello, world!")
+    app()
