@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "tabforge"
-version = "0.1.0"
+version = "0.0.1"
 description = ""
 authors = ["Wenyu Zhao <wenyuzhaox@gmail.com>"]
 readme = "README.md"
