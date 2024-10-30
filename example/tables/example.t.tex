@@ -6,34 +6,35 @@ DF = pd.read_csv('example/tables/example.csv')
 DATA_ROWS = [row[1]for row in list(DF.iterrows())[:22]]
 MEAN = list(DF.iterrows())[25][1]
 GMEAN = list(DF.iterrows())[26][1]
+DF.drop(DF.tail(5).index, inplace=True) # drop last 5 rows
 
 CI_LO = '.95.0%-CI.lowerBound'
 CI_HI = '.95.0%-CI.upperBound'
 <? endpython ?>
 
-<? macro val(row, key, mark=True) ?>
-    <? if mark and row[key] == DF[key].max() ?>
+<? macro val(row, i, key, mark=False) ?>
+    <? if mark and i == DF[key].idxmax() ?>
         <?= row[key] | fmt | red ?>
-    <? elif mark and row[key] == DF[key].min() ?>
+    <? elif mark and i == DF[key].idxmin() ?>
         <?= row[key] | fmt | green ?>
     <? else ?>
         <?= row[key] | fmt ?>
     <? endif ?>
 <? endmacro ?>
 
-<? macro ci(row, key) ?>
+<? macro ci(row, i, key) ?>
     \begin{tabular}{@{}r@{}}
         <?= ('--' + (row[key + CI_LO] | fmt)) | tiny ?>\\
         <?= ('+' + (row[key + CI_HI] | fmt)) | tiny ?>
     \end{tabular}
 <? endmacro ?>
 
-<? macro valci(row, key) ?>
+<? macro valci(row, i, key) ?>
     \bgroup
     \setlength\tabcolsep{1pt}
     \def\arraystretch{0.50}
     \begin{tabular}{@{}r r@{}}
-        <?= val(row, key) | center.v ?> & <?= ci(row, key) | gray ?>
+        <?= val(row, i, key, mark=True) | center.v ?> & <?= ci(row, i, key) | gray ?>
     \end{tabular}
     \egroup
 <? endmacro ?>
@@ -47,7 +48,7 @@ CI_HI = '.95.0%-CI.upperBound'
     \cmidrule(){1-1}\cmidrule(){3-5}
     % data rows
     <? for r in DATA_ROWS: ?>
-        <?= r['Unnamed: 2'] | emph ?>                    & & <?= val(r, 'G1', mark=False) ?> & <?= valci(r, 'LXR')  ?>        & <?= valci(r, 'Shen') ?>       \\
+        <?= r['Unnamed: 2'] | emph ?>                    & & <?= val(r, loop.index0, 'G1', mark=False) ?> & <?= valci(r, loop.index0, 'LXR')  ?>        & <?= valci(r, loop.index0, 'Shen') ?>       \\
     <? endfor ?>
     \cmidrule(){1-1}\cmidrule(){3-5}
     % mean
