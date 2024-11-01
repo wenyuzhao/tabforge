@@ -1,7 +1,7 @@
 <? python ?>
 import pandas as pd
 
-DF = pd.read_csv('example/tables/example.csv')
+DF = pd.read_csv('./example.csv')
 
 DATA_ROWS = [row[1]for row in list(DF.iterrows())[:22]]
 MEAN = list(DF.iterrows())[25][1]

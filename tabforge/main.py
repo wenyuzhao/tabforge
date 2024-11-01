@@ -7,7 +7,13 @@ from . import render
 from .error import Error
 
 
-app = typer.Typer(add_completion=False)
+app = typer.Typer(
+    no_args_is_help=True,
+    add_completion=False,
+    context_settings=dict(help_option_names=["-h", "--help"]),
+    pretty_exceptions_short=True,
+    pretty_exceptions_show_locals=False,
+)
 
 
 @app.command()
@@ -23,7 +29,7 @@ def render_files(
         bool, typer.Option("--quiet", "-q", help="Enable quiet mode.")
     ] = False,
 ):
-    input_files = []
+    input_files: list[Path] = []
     # verify inputs
     for input in inputs:
         if not input.exists():
@@ -39,11 +45,15 @@ def render_files(
                 input_files.append(file)
     # render files
     for input in input_files:
-        output = Path(str(input).replace(".t.tex", ".g.tex"))
+        output = Path(str(input.name).replace(".t.tex", ".g.tex"))
+        output_full_path = Path(str(input).replace(".t.tex", ".g.tex"))
         render.render_file(input=input, output=output)
         if not quiet:
             rich.print(
-                f"[bold green]RENDER[/bold green]", input, "[blue]➔[/blue]", output
+                f"[bold green]RENDER[/bold green]",
+                input,
+                "[blue]➔[/blue]",
+                output_full_path,
             )
 
 

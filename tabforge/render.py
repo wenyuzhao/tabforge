@@ -8,7 +8,7 @@ from io import StringIO
 from contextlib import redirect_stdout
 from jinja2.ext import Extension
 from jinja2 import nodes
-import copy, math
+import copy, os
 from . import filters
 
 
@@ -79,6 +79,10 @@ class PythonExtension(Extension):
 
 
 def render_file(input: Path, output: Path):
+    # Switch to the input file's directory
+    curdir = os.curdir
+    os.chdir(input.parent)
+    input = Path(input.name)
     env = jinja2.Environment(
         loader=jinja2.FileSystemLoader("."),
         trim_blocks=True,
@@ -96,3 +100,5 @@ def render_file(input: Path, output: Path):
         output.write_text(template.render())
     except jinja2.TemplateError as e:
         raise Error(f'Error rendering "{input}": {e}')
+    finally:
+        os.chdir(curdir)
