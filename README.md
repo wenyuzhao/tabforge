@@ -1,5 +1,7 @@
 # tabforge
 
+Simple Latex table template engine.
+
 ## Getting Started
 
 1. `pipx install tabforge`
