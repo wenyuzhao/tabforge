@@ -1,5 +1,6 @@
 from pathlib import Path
 from textwrap import dedent
+from typing import cast
 from rich import print
 from .error import Error
 import jinja2
@@ -17,6 +18,7 @@ class PythonExtension(Extension):
 
     def __init__(self, environment: jinja2.Environment):
         super().__init__(environment)
+        self.capture_stdout = False
 
     def parse(self, parser):
         # We need this for reporting errors
@@ -49,7 +51,10 @@ class PythonExtension(Extension):
             ctx.parent["filter"] = filter
             ctx.parent["__file__"] = filename
             sys.path.append(str(Path(filename).parent))
-            with redirect_stdout(stdout):
+            if self.capture_stdout:
+                with redirect_stdout(stdout):
+                    exec(compiled_code, copy.copy(ctx.parent), ctx.vars)
+            else:
                 exec(compiled_code, copy.copy(ctx.parent), ctx.vars)
         except Exception:
             raise
@@ -75,10 +80,10 @@ class PythonExtension(Extension):
                         ctypes.py_object(caller_frame), ctypes.c_int(1)
                     )
         # 6. Return the captured text.
-        return stdout.getvalue()
+        return stdout.getvalue() if self.capture_stdout else ""
 
 
-def render_file(input: Path, output: Path):
+def render_file(input: Path, output: Path, capture_stdout: bool, inject_builtins: bool):
     # Switch to the input file's directory
     curdir = os.curdir
     os.chdir(input.parent)
@@ -93,12 +98,30 @@ def render_file(input: Path, output: Path):
         comment_start_string="<?#",
         comment_end_string="?>",
     )
+    # Add builtins to the environment
+    if inject_builtins:
+        for k, v in __builtins__.items():
+            if (
+                k.startswith("__")
+                or not callable(v)
+                or k in ["copyright", "credits", "license", "help"]
+            ):
+                continue
+
+            if k not in env.globals:
+                env.globals[k] = v
     env.filters.update(filters.ALL_FILTERS)
+    # Add the Python extension
     env.add_extension(PythonExtension)
+    ext = cast(PythonExtension, env.extensions[PythonExtension.identifier])
+    ext.capture_stdout = capture_stdout
+    # Render the template
     template = env.get_template(str(input))
     try:
-        output.write_text(template.render())
+        output.write_text(HEADER + '\n' + template.render())
     except jinja2.TemplateError as e:
         raise Error(f'Error rendering "{input}": {e}')
     finally:
         os.chdir(curdir)
+
+HEADER = "% This is an automatically generated file. Do not edit."

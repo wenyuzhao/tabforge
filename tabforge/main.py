@@ -28,6 +28,15 @@ def render_files(
     quiet: Annotated[
         bool, typer.Option("--quiet", "-q", help="Enable quiet mode.")
     ] = False,
+    stdout: Annotated[
+        bool, typer.Option(help="Capture stdout as part of the rendered result.")
+    ] = False,
+    builtins: Annotated[
+        bool,
+        typer.Option(
+            help="Inject built-in functions into the rendering environment."
+        ),
+    ] = True,
 ):
     input_files: list[Path] = []
     # verify inputs
@@ -47,7 +56,12 @@ def render_files(
     for input in input_files:
         output = Path(str(input.name).replace(".t.tex", ".g.tex"))
         output_full_path = Path(str(input).replace(".t.tex", ".g.tex"))
-        render.render_file(input=input, output=output)
+        render.render_file(
+            input=input,
+            output=output,
+            capture_stdout=stdout,
+            inject_builtins=builtins,
+        )
         if not quiet:
             rich.print(
                 f"[bold green]RENDER[/bold green]",
