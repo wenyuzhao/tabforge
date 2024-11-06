@@ -85,7 +85,7 @@ class PythonExtension(Extension):
 
 def render_file(input: Path, output: Path, capture_stdout: bool, inject_builtins: bool):
     # Switch to the input file's directory
-    curdir = os.curdir
+    curdir = Path(os.curdir).absolute()
     os.chdir(input.parent)
     input = Path(input.name)
     env = jinja2.Environment(
@@ -118,10 +118,11 @@ def render_file(input: Path, output: Path, capture_stdout: bool, inject_builtins
     # Render the template
     template = env.get_template(str(input))
     try:
-        output.write_text(HEADER + '\n' + template.render())
+        output.write_text(HEADER + "\n" + template.render())
     except jinja2.TemplateError as e:
         raise Error(f'Error rendering "{input}": {e}')
     finally:
         os.chdir(curdir)
+
 
 HEADER = "% This is an automatically generated file. Do not edit."
